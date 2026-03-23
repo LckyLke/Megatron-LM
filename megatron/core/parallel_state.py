@@ -2097,69 +2097,48 @@ def get_all_ranks():
     return "_".join(map(lambda x: str(x or 0), ranks))
 
 
-def _destroy_process_group_if_active(pg):
-    """Destroy a process group if it is not None and still registered."""
-    if (
-        pg is not None
-        and torch.distributed.distributed_c10d._world.pg_map.get(pg, None) is not None
-    ):
-        torch.distributed.destroy_process_group(pg)
-
-
 def destroy_model_parallel():
-    """Set the groups to none and destroy process groups to free NCCL resources."""
+    """Set the groups to none."""
     global _MODEL_PARALLEL_GROUP
-    _destroy_process_group_if_active(_MODEL_PARALLEL_GROUP)
     _MODEL_PARALLEL_GROUP = None
 
     global _TENSOR_MODEL_PARALLEL_GROUP
-    _destroy_process_group_if_active(_TENSOR_MODEL_PARALLEL_GROUP)
     _TENSOR_MODEL_PARALLEL_GROUP = None
 
     global _PIPELINE_MODEL_PARALLEL_GROUP
-    _destroy_process_group_if_active(_PIPELINE_MODEL_PARALLEL_GROUP)
     _PIPELINE_MODEL_PARALLEL_GROUP = None
 
     global _DATA_PARALLEL_GROUP
-    _destroy_process_group_if_active(_DATA_PARALLEL_GROUP)
     _DATA_PARALLEL_GROUP = None
 
     global _DATA_PARALLEL_GROUP_WITH_CP
-    _destroy_process_group_if_active(_DATA_PARALLEL_GROUP_WITH_CP)
     _DATA_PARALLEL_GROUP_WITH_CP = None
 
     global _DATA_PARALLEL_GROUP_WITH_CP_AG
-    _destroy_process_group_if_active(_DATA_PARALLEL_GROUP_WITH_CP_AG)
     _DATA_PARALLEL_GROUP_WITH_CP_AG = None
 
     global _CONTEXT_PARALLEL_GROUP
-    _destroy_process_group_if_active(_CONTEXT_PARALLEL_GROUP)
     _CONTEXT_PARALLEL_GROUP = None
 
     global _CONTEXT_PARALLEL_GLOBAL_RANKS
     _CONTEXT_PARALLEL_GLOBAL_RANKS = None
 
     global _EMBEDDING_GROUP
-    _destroy_process_group_if_active(_EMBEDDING_GROUP)
     _EMBEDDING_GROUP = None
 
     global _POSITION_EMBEDDING_GROUP
-    _destroy_process_group_if_active(_POSITION_EMBEDDING_GROUP)
     _POSITION_EMBEDDING_GROUP = None
 
     global _POSITION_EMBEDDING_GLOBAL_RANKS
     _POSITION_EMBEDDING_GLOBAL_RANKS = None
 
     global _TENSOR_AND_DATA_PARALLEL_GROUP
-    _destroy_process_group_if_active(_TENSOR_AND_DATA_PARALLEL_GROUP)
     _TENSOR_AND_DATA_PARALLEL_GROUP = None
 
     global _TENSOR_AND_DATA_PARALLEL_GROUP_WITH_CP
-    _destroy_process_group_if_active(_TENSOR_AND_DATA_PARALLEL_GROUP_WITH_CP)
     _TENSOR_AND_DATA_PARALLEL_GROUP_WITH_CP = None
 
     global _TENSOR_AND_CONTEXT_PARALLEL_GROUP
-    _destroy_process_group_if_active(_TENSOR_AND_CONTEXT_PARALLEL_GROUP)
     _TENSOR_AND_CONTEXT_PARALLEL_GROUP = None
 
     global _VIRTUAL_PIPELINE_MODEL_PARALLEL_RANK
@@ -2190,16 +2169,27 @@ def destroy_model_parallel():
     _GLOBAL_SYMMETRIC_MEMORY_BUFFER_EP = None
 
     global _DATA_PARALLEL_GROUP_GLOO
-    _destroy_process_group_if_active(_DATA_PARALLEL_GROUP_GLOO)
+    if (
+        _DATA_PARALLEL_GROUP_GLOO is not None
+        and torch.distributed.distributed_c10d._world.pg_map.get(_DATA_PARALLEL_GROUP_GLOO, None)
+        is not None
+    ):
+        torch.distributed.destroy_process_group(_DATA_PARALLEL_GROUP_GLOO)
     _DATA_PARALLEL_GROUP_GLOO = None
 
     global _DATA_PARALLEL_GROUP_WITH_CP_GLOO
-    _destroy_process_group_if_active(_DATA_PARALLEL_GROUP_WITH_CP_GLOO)
+    if (
+        _DATA_PARALLEL_GROUP_WITH_CP_GLOO is not None
+        and torch.distributed.distributed_c10d._world.pg_map.get(
+            _DATA_PARALLEL_GROUP_WITH_CP_GLOO, None
+        )
+        is not None
+    ):
+        torch.distributed.destroy_process_group(_DATA_PARALLEL_GROUP_WITH_CP_GLOO)
     _DATA_PARALLEL_GROUP_WITH_CP_GLOO = None
 
     # Destroy parallel state related to expert parallelism.
     global _EXPERT_MODEL_PARALLEL_GROUP
-    _destroy_process_group_if_active(_EXPERT_MODEL_PARALLEL_GROUP)
     _EXPERT_MODEL_PARALLEL_GROUP = None
 
     global _MPU_EXPERT_MODEL_PARALLEL_WORLD_SIZE
@@ -2209,7 +2199,6 @@ def destroy_model_parallel():
     _MPU_EXPERT_MODEL_PARALLEL_RANK = None
 
     global _EXPERT_TENSOR_PARALLEL_GROUP
-    _destroy_process_group_if_active(_EXPERT_TENSOR_PARALLEL_GROUP)
     _EXPERT_TENSOR_PARALLEL_GROUP = None
 
     global _MPU_EXPERT_TENSOR_PARALLEL_WORLD_SIZE
@@ -2219,40 +2208,45 @@ def destroy_model_parallel():
     _MPU_EXPERT_TENSOR_PARALLEL_RANK = None
 
     global _EXPERT_TENSOR_AND_MODEL_PARALLEL_GROUP
-    _destroy_process_group_if_active(_EXPERT_TENSOR_AND_MODEL_PARALLEL_GROUP)
     _EXPERT_TENSOR_AND_MODEL_PARALLEL_GROUP = None
 
     global _EXPERT_TENSOR_MODEL_PIPELINE_PARALLEL_GROUP
-    _destroy_process_group_if_active(_EXPERT_TENSOR_MODEL_PIPELINE_PARALLEL_GROUP)
     _EXPERT_TENSOR_MODEL_PIPELINE_PARALLEL_GROUP = None
 
     global _EXPERT_DATA_PARALLEL_GROUP
-    _destroy_process_group_if_active(_EXPERT_DATA_PARALLEL_GROUP)
     _EXPERT_DATA_PARALLEL_GROUP = None
 
     global _EXPERT_DATA_PARALLEL_GROUP_GLOO
-    _destroy_process_group_if_active(_EXPERT_DATA_PARALLEL_GROUP_GLOO)
+    if (
+        _EXPERT_DATA_PARALLEL_GROUP_GLOO is not None
+        and torch.distributed.distributed_c10d._world.pg_map.get(
+            _EXPERT_DATA_PARALLEL_GROUP_GLOO, None
+        )
+        is not None
+    ):
+        torch.distributed.destroy_process_group(_EXPERT_DATA_PARALLEL_GROUP_GLOO)
     _EXPERT_DATA_PARALLEL_GROUP_GLOO = None
 
     global _INTRA_PARTIAL_EXPERT_DATA_PARALLEL_GROUP
-    _destroy_process_group_if_active(_INTRA_PARTIAL_EXPERT_DATA_PARALLEL_GROUP)
     _INTRA_PARTIAL_EXPERT_DATA_PARALLEL_GROUP = None
 
     global _INTRA_PARTIAL_EXPERT_DATA_PARALLEL_GROUP_GLOO
-    _destroy_process_group_if_active(_INTRA_PARTIAL_EXPERT_DATA_PARALLEL_GROUP_GLOO)
+    if (
+        _INTRA_PARTIAL_EXPERT_DATA_PARALLEL_GROUP_GLOO is not None
+        and torch.distributed.distributed_c10d._world.pg_map.get(
+            _INTRA_PARTIAL_EXPERT_DATA_PARALLEL_GROUP_GLOO, None
+        )
+        is not None
+    ):
+        torch.distributed.destroy_process_group(_INTRA_PARTIAL_EXPERT_DATA_PARALLEL_GROUP_GLOO)
     _INTRA_PARTIAL_EXPERT_DATA_PARALLEL_GROUP_GLOO = None
 
     global _INTER_PARTIAL_EXPERT_DATA_PARALLEL_GROUP
-    _destroy_process_group_if_active(_INTER_PARTIAL_EXPERT_DATA_PARALLEL_GROUP)
     _INTER_PARTIAL_EXPERT_DATA_PARALLEL_GROUP = None
     # End of expert parallelism destroy.
 
     global _INTRA_DISTRIBUTED_OPTIMIZER_INSTANCE_GROUP
-    _destroy_process_group_if_active(_INTRA_DISTRIBUTED_OPTIMIZER_INSTANCE_GROUP)
     _INTRA_DISTRIBUTED_OPTIMIZER_INSTANCE_GROUP = None
 
     global _global_process_group_list
-    if _global_process_group_list is not None:
-        for pg in _global_process_group_list:
-            _destroy_process_group_if_active(pg)
     _global_process_group_list = None
