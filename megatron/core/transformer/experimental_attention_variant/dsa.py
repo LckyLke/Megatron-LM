@@ -41,9 +41,13 @@ def rotate_activation(x: torch.Tensor) -> torch.Tensor:
     assert (
         x.dtype == torch.bfloat16
     ), f"rotate_activation only support bf16 input, but got {x.dtype}"
-    assert hadamard_transform is not None, "fast_hadamard_transform is not installed."
+    # Use module-level lookup so test mocks can patch the function.
+    import megatron.core.transformer.experimental_attention_variant.dsa as _self_module
+
+    _hadamard_fn = _self_module.hadamard_transform
+    assert _hadamard_fn is not None, "fast_hadamard_transform is not installed."
     hidden_size = x.size(-1)
-    return hadamard_transform(x, scale=hidden_size**-0.5)
+    return _hadamard_fn(x, scale=hidden_size**-0.5)
 
 
 class DSAIndexerLossLoggingHelper:
