@@ -43,17 +43,14 @@ def mock_hadamard_transform(x: torch.Tensor, scale: float = 1.0) -> torch.Tensor
     return x * scale
 
 
-@pytest.fixture(autouse=True)
-def patch_hadamard_if_needed():
-    """Automatically patch hadamard_transform in dsa module if not installed."""
-    if not HAVE_HADAMARD:
-        with patch(
-            'megatron.core.transformer.experimental_attention_variant.dsa.hadamard_transform',
-            mock_hadamard_transform,
-        ):
-            yield
-    else:
-        yield
+# Patch the module-level variable directly so that dsa.rotate_activation()'s
+# `assert hadamard_transform is not None` sees the mock instead of None.
+# unittest.mock.patch replaces module attributes but the function closes over
+# the original global, so we must mutate the actual module namespace.
+if not HAVE_HADAMARD:
+    import megatron.core.transformer.experimental_attention_variant.dsa as _dsa_module
+
+    _dsa_module.hadamard_transform = mock_hadamard_transform
 
 
 class TestRotateActivation:
