@@ -22,12 +22,9 @@ from megatron.core.transformer.spec_utils import ModuleSpec, build_module
 from megatron.core.transformer.transformer_config import TransformerConfig
 
 try:
-    from fast_hadamard_transform import hadamard_transform as _hadamard_transform
+    from fast_hadamard_transform import hadamard_transform
 except ImportError:
-    _hadamard_transform = None
-
-# Module-level attribute used by rotate_activation and mockable by tests.
-hadamard_transform = _hadamard_transform
+    hadamard_transform = None  # noqa: F841 — looked up via globals() for mockability
 
 
 def rotate_activation(x: torch.Tensor) -> torch.Tensor:
@@ -44,10 +41,8 @@ def rotate_activation(x: torch.Tensor) -> torch.Tensor:
     assert (
         x.dtype == torch.bfloat16
     ), f"rotate_activation only support bf16 input, but got {x.dtype}"
-    # Look up via module attribute so test mocks (unittest.mock.patch) take effect.
-    import sys
-
-    _hadamard_fn = sys.modules[__name__].hadamard_transform
+    # Look up via globals() so unittest.mock.patch on this module attribute takes effect.
+    _hadamard_fn = globals()['hadamard_transform']
     assert _hadamard_fn is not None, "fast_hadamard_transform is not installed."
     hidden_size = x.size(-1)
     return _hadamard_fn(x, scale=hidden_size**-0.5)
